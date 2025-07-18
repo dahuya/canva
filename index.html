@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>增强版手机画板</title>
+    <title>白色背景画板</title>
     <style>
         * {
             margin: 0;
@@ -87,62 +87,6 @@
         .export-btn {
             background-color: #3498db;
         }
-        
-        .brush-selector {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 5px;
-            margin-top: 5px;
-        }
-        
-        .brush-preview {
-            width: 30px;
-            height: 30px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            cursor: pointer;
-        }
-        
-        .brush-preview.active {
-            border: 2px solid #4CAF50;
-        }
-        
-        .export-menu {
-            display: none;
-            position: absolute;
-            background-color: #333;
-            border-radius: 4px;
-            padding: 8px;
-            z-index: 100;
-            right: 8px;
-            top: 50px;
-        }
-        
-        .export-menu.show {
-            display: block;
-        }
-        
-        .export-option {
-            padding: 8px;
-            color: white;
-            cursor: pointer;
-            border-radius: 4px;
-        }
-        
-        .export-option:hover {
-            background-color: #555;
-        }
-        
-        @media (max-width: 480px) {
-            .tool-btn {
-                padding: 6px 8px;
-                font-size: 12px;
-            }
-            
-            .size-slider {
-                width: 60px;
-            }
-        }
     </style>
 </head>
 <body>
@@ -155,35 +99,6 @@
             <span id="sizeValue">5px</span>
             <button class="tool-btn clear-btn" id="clearBtn">清空</button>
             <button class="tool-btn export-btn" id="exportBtn">导出</button>
-            
-            <div class="export-menu" id="exportMenu">
-                <div class="export-option" data-format="png">PNG格式</div>
-                <div class="export-option" data-format="jpeg">JPG格式</div>
-            </div>
-            
-            <div class="brush-selector">
-                <div class="brush-preview active" data-brush="round" title="圆形画笔"></div>
-                <div class="brush-preview" data-brush="star" title="星形画笔">
-                    <svg viewBox="0 0 24 24" width="100%" height="100%">
-                        <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" fill="black"/>
-                    </svg>
-                </div>
-                <div class="brush-preview" data-brush="triangle" title="三角形画笔">
-                    <svg viewBox="0 0 24 24" width="100%" height="100%">
-                        <path d="M12 2L2 22h20L12 2z" fill="black"/>
-                    </svg>
-                </div>
-                <div class="brush-preview" data-brush="square" title="方形画笔">
-                    <svg viewBox="0 0 24 24" width="100%" height="100%">
-                        <rect x="3" y="3" width="18" height="18" fill="black"/>
-                    </svg>
-                </div>
-                <div class="brush-preview" data-brush="dashed" title="虚线画笔">
-                    <svg viewBox="0 0 24 24" width="100%" height="100%">
-                        <path d="M0 12h8M16 12h8" stroke="black" stroke-width="2" stroke-dasharray="3,3"/>
-                    </svg>
-                </div>
-            </div>
         </div>
         
         <div class="canvas-container">
@@ -202,15 +117,16 @@
         const sizeValue = document.getElementById('sizeValue');
         const clearBtn = document.getElementById('clearBtn');
         const exportBtn = document.getElementById('exportBtn');
-        const exportMenu = document.getElementById('exportMenu');
-        const exportOptions = document.querySelectorAll('.export-option');
-        const brushPreviews = document.querySelectorAll('.brush-preview');
         
         // 设置画布大小
         function resizeCanvas() {
             const container = canvas.parentElement;
             canvas.width = container.clientWidth;
             canvas.height = container.clientHeight;
+            
+            // 确保画布背景为白色
+            ctx.fillStyle = 'white';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
         }
         
         // 初始化画布
@@ -224,7 +140,6 @@
         let currentTool = 'pen';
         let currentColor = '#000000';
         let currentSize = 5;
-        let currentBrush = 'round';
         
         // 更新显示的大小值
         sizeSlider.addEventListener('input', function() {
@@ -252,64 +167,30 @@
         
         // 清空画布
         clearBtn.addEventListener('click', function() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = 'white';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
         });
         
-        // 导出按钮点击
-        exportBtn.addEventListener('click', function(e) {
-            exportMenu.classList.toggle('show');
-            e.stopPropagation();
-        });
-        
-        // 导出选项点击
-        exportOptions.forEach(option => {
-            option.addEventListener('click', function() {
-                const format = this.dataset.format;
-                exportImage(format);
-                exportMenu.classList.remove('show');
-            });
-        });
-        
-        // 点击其他地方关闭导出菜单
-        document.addEventListener('click', function() {
-            exportMenu.classList.remove('show');
-        });
-        
-        // 导出图片函数
-        function exportImage(format) {
-            // 创建临时链接
+        // 导出图片
+        exportBtn.addEventListener('click', function() {
+            // 创建临时Canvas用于导出
+            const exportCanvas = document.createElement('canvas');
+            exportCanvas.width = canvas.width;
+            exportCanvas.height = canvas.height;
+            const exportCtx = exportCanvas.getContext('2d');
+            
+            // 填充白色背景
+            exportCtx.fillStyle = 'white';
+            exportCtx.fillRect(0, 0, exportCanvas.width, exportCanvas.height);
+            
+            // 绘制原始内容
+            exportCtx.drawImage(canvas, 0, 0);
+            
+            // 导出为PNG
             const link = document.createElement('a');
-            
-            // 设置文件名
-            const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-            let filename = `drawing-${timestamp}`;
-            let mimeType;
-            
-            // 根据格式设置文件类型
-            if (format === 'png') {
-                filename += '.png';
-                mimeType = 'image/png';
-            } else {
-                filename += '.jpg';
-                mimeType = 'image/jpeg';
-            }
-            
-            // 将画布转换为数据URL
-            const dataURL = canvas.toDataURL(mimeType);
-            
-            // 设置链接属性并触发下载
-            link.href = dataURL;
-            link.download = filename;
+            link.download = 'drawing-' + new Date().toISOString().replace(/[:.]/g, '-') + '.png';
+            link.href = exportCanvas.toDataURL('image/png');
             link.click();
-        }
-        
-        // 画笔类型选择
-        brushPreviews.forEach(preview => {
-            preview.addEventListener('click', function() {
-                brushPreviews.forEach(p => p.classList.remove('active'));
-                this.classList.add('active');
-                currentBrush = this.dataset.brush;
-            });
         });
         
         // 获取触摸/鼠标位置
@@ -330,96 +211,14 @@
             return { x, y };
         }
         
-        // 绘制星形
-        function drawStar(x, y, spikes, outerRadius, innerRadius) {
-            const rot = Math.PI / 2 * 3;
-            const step = Math.PI / spikes;
-            
-            ctx.beginPath();
-            ctx.moveTo(x, y - outerRadius);
-            
-            for (let i = 0; i < spikes; i++) {
-                const px = x + Math.cos(rot + step * i) * outerRadius;
-                const py = y + Math.sin(rot + step * i) * outerRadius;
-                ctx.lineTo(px, py);
-                
-                const qx = x + Math.cos(rot + step * i + step / 2) * innerRadius;
-                const qy = y + Math.sin(rot + step * i + step / 2) * innerRadius;
-                ctx.lineTo(qx, qy);
-            }
-            
-            ctx.lineTo(x, y - outerRadius);
-            ctx.closePath();
-        }
-        
-        // 绘制三角形
-        function drawTriangle(x, y, size) {
-            const height = size * Math.sqrt(3);
-            ctx.beginPath();
-            ctx.moveTo(x, y - height / 2);
-            ctx.lineTo(x - size / 2, y + height / 2);
-            ctx.lineTo(x + size / 2, y + height / 2);
-            ctx.closePath();
-        }
-        
-        // 绘制方形
-        function drawSquare(x, y, size) {
-            ctx.beginPath();
-            ctx.rect(x - size / 2, y - size / 2, size, size);
-            ctx.closePath();
-        }
-        
-        // 绘制虚线
-        function drawDashedLine(x1, y1, x2, y2, pattern) {
-            ctx.beginPath();
-            ctx.setLineDash(pattern);
-            ctx.moveTo(x1, y1);
-            ctx.lineTo(x2, y2);
-            ctx.stroke();
-            ctx.setLineDash([]);
-        }
-        
         // 开始绘制
         function startDrawing(e) {
             isDrawing = true;
             const pos = getPosition(e);
             [lastX, lastY] = [pos.x, pos.y];
             
-            // 立即绘制一个点
-            drawAtPosition(pos.x, pos.y);
-            
             e.preventDefault();
             return false;
-        }
-        
-        // 在指定位置绘制
-        function drawAtPosition(x, y) {
-            ctx.fillStyle = currentTool === 'eraser' ? '#ffffff' : currentColor;
-            ctx.strokeStyle = currentTool === 'eraser' ? '#ffffff' : currentColor;
-            ctx.lineWidth = currentSize;
-            
-            switch(currentBrush) {
-                case 'round':
-                    ctx.beginPath();
-                    ctx.arc(x, y, currentSize / 2, 0, Math.PI * 2);
-                    ctx.fill();
-                    break;
-                case 'star':
-                    drawStar(x, y, 5, currentSize, currentSize / 2);
-                    ctx.fill();
-                    break;
-                case 'triangle':
-                    drawTriangle(x, y, currentSize);
-                    ctx.fill();
-                    break;
-                case 'square':
-                    drawSquare(x, y, currentSize);
-                    ctx.fill();
-                    break;
-                case 'dashed':
-                    // 虚线需要特殊处理，通常在draw函数中处理
-                    break;
-            }
         }
         
         // 绘制中
@@ -430,17 +229,13 @@
             const x = pos.x;
             const y = pos.y;
             
-            if (currentBrush === 'dashed') {
-                drawDashedLine(lastX, lastY, x, y, [currentSize, currentSize]);
-            } else {
-                ctx.beginPath();
-                ctx.moveTo(lastX, lastY);
-                ctx.lineTo(x, y);
-                ctx.lineWidth = currentSize * 2;
-                ctx.lineCap = 'round';
-                ctx.strokeStyle = currentTool === 'eraser' ? '#ffffff' : currentColor;
-                ctx.stroke();
-            }
+            ctx.beginPath();
+            ctx.moveTo(lastX, lastY);
+            ctx.lineTo(x, y);
+            ctx.lineWidth = currentSize * 2;
+            ctx.lineCap = 'round';
+            ctx.strokeStyle = currentTool === 'eraser' ? 'white' : currentColor;
+            ctx.stroke();
             
             [lastX, lastY] = [x, y];
             
