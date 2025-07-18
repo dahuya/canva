@@ -1,2 +1,2 @@
 # canva
-this is a html canva application
+this is a html drawing board application
